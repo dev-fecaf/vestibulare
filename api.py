@@ -1,0 +1,68 @@
+import json
+import httpx
+import settings as s
+
+
+base_url = 'https://ser-importacao.vestibulare.com.br/va/api'
+chave = s.CHAVE
+
+
+def unidade():
+
+    params = {
+        'chave': chave,
+        'acao': 'selecionar'
+    }
+
+    response = httpx.get(url=f'{base_url}/unidades.php', params=params)
+    response.raise_for_status()
+    return response.json()
+
+
+def turmas(id_unidade: int = 1):
+    params = {
+        'chave': chave,
+        'acao': 'selecionar',
+        'idUnidade': id_unidade,
+        'tipoTurma': 'cicloComum'
+    }
+
+    response = httpx.get(url=f'{base_url}/turmas.php', params=params)
+    response.raise_for_status()
+    response_json = response.json()
+
+    if not response_json.get('turmas'):
+        raise ValueError(response_json)
+
+    return response_json
+
+
+def medias_bimestrais(rga: str, id_turma: int, periodo: int, ano: int, id_unidade: int = 1):
+    params = {
+        'chave': chave,
+        'acao': 'medias',
+        'emailAdm': 'administrador@vestibulare.com.br',
+        'aluno': json.dumps({
+            'rga': rga,
+            'idTurma': id_turma,
+            'idUnidade': id_unidade,
+            'periodo': periodo,
+            'ano': ano
+        })
+    }
+
+    response = httpx.get(url=f'{base_url}/mediasBimestrais.php', params=params)
+    response.raise_for_status()
+    response_json = response.json()
+
+    if not response_json.get('resposta'):
+        raise ValueError(response_json)
+
+    return response_json
+
+
+
+if __name__ == '__main__':
+    r = turmas()
+    print(r.status_code)
+    print(r.url)
