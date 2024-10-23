@@ -1,5 +1,5 @@
-from set_logger import logger, nota
-from database import records
+from set_logger import logger
+import database as db
 from dict_turmas import turmas
 from dict_disciplinas import disciplinas
 from datetime import date
@@ -20,7 +20,7 @@ try:
         try:
             if turmas.get(id_turma):
                 turma = turmas[id_turma]
-                alunos = records('query1.sql', params=(ano_atual, turma))
+                alunos = db.records('query1.sql', params=(ano_atual, turma))
                 if not alunos:
                     logger.error(f'{turma} não encontrada no periodo {ano_atual}')
                     continue
@@ -45,7 +45,7 @@ try:
                     if disciplinas.get(id_disciplina):
                         disciplina = disciplinas[id_disciplina]
                         params = (ano_atual, turma, rga, disciplina, bimestre)
-                        avaliacao = records(sql_file='query2.sql', params=params)
+                        avaliacao = db.records(sql_file='query2.sql', params=params)
                         if not avaliacao:
                             logger.error(f'Nenhuma avaliação encontrada para os parametros: {params}')
                             continue
@@ -54,13 +54,38 @@ try:
                         media = media_disciplinas.get(id_disciplina)
                         if media:
                             nota = media['media']
-                            resultado = mentor.grava_nota(
-                                id_avaliacao=avaliacao['apc_id'], id_aluno=avaliacao['pes_id'], nota=nota
-                            )
-                            print(resultado)
-                        else:
-                            logger.error(f'Disciplina {disciplina} ID {id_disciplina} sem nota lançada')
-                            continue
+                            pes_id = avaliacao['pes_id']
+                            apc_id = avaliacao['apc_id']
+                            id_ingresso = avaliacao['id_ingresso']
+                            id_discip = avaliacao['id_disciplina']
+
+                            list_aluno_nota = [{
+                                'idAluno': pes_id,
+                                'nota': nota
+                            }]
+
+                            nota_payload = {
+                                'idAvaliacao': apc_id,
+                                'listAlunoNota': list_aluno_nota
+                            }
+
+                            grava_nota = mentor.executa_servico(servico='gravaNotaAvaliacao', payload=nota_payload)
+
+                            resultado = grava_nota['valor']
+                            cod_erro = 'ICA_00800'
+                            if resultado['codigoRetornoIntegracao'] == cod_erro:
+                                for aluno_nota in resultado['listAlunoNota']:
+                                    if aluno_nota['codigoRetornoIntegracao'] == cod_erro:
+                                        logger.error(
+                                            f"{aluno_nota['observacaoRetornoIntegracao']} | "
+                                            f"nota: {aluno_nota['nota']} | id_avaliacao: {apc_id} | "
+                                            f"id_aluno: {pes_id} | parametros: {params}"
+                                        )
+
+                            faltas = media['faltas']
+                            if faltas > 0:
+                                params = (faltas, id_ingresso, id_discip)
+                                db.insert(sql_file='query4.sql', params=params)
                     else:
                         logger.error(f'Diciplina ID {id_disciplina} não mapeada')
                 except:

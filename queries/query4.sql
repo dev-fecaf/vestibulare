@@ -1,0 +1,8 @@
+DECLARE @total_falta INT = %s
+DECLARE @ing_id INT = %s
+DECLARE @dis_id INT = %s
+
+INSERT INTO TB_IMPRESSAO_HISTORICO
+(IHI_TOTFAL, IHI_INGID, IHI_DISID, IHI_CARHOR, IHI_DATGER, ATIVO, UNIDON, GRUPO_UNIDON, USUARIO_ULT_ALTERACAO, DATA_ULT_ALTERACAO, VERSAO)
+VALUES
+(@total_falta, @ing_id, @dis_id, 0, getdate(), 1, 1, 1, 'integ_vestibulare', getdate(), 0)

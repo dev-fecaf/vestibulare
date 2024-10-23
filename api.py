@@ -32,7 +32,7 @@ def turmas(id_unidade: int = 1):
     response_json = response.json()
 
     if not response_json.get('turmas'):
-        raise ValueError(response_json)
+        raise httpx.HTTPStatusError(message=response.text, request=response.request, response=response)
 
     return response_json
 
@@ -56,13 +56,6 @@ def medias_bimestrais(rga: str, id_turma: int, periodo: int, ano: int, id_unidad
     response_json = response.json()
 
     if not response_json.get('resposta'):
-        raise ValueError(response_json)
+        raise httpx.HTTPStatusError(message=response.text, request=response.request, response=response)
 
     return response_json
-
-
-
-if __name__ == '__main__':
-    r = turmas()
-    print(r.status_code)
-    print(r.url)

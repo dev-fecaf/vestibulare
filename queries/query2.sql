@@ -1,7 +1,9 @@
 SELECT DISTINCT
     ALU.PES_ID as pes_id,
     APC_ID as apc_id,
-    REPLACE(APR_NOTEXI,',','.') as nota_atual
+    REPLACE(APR_NOTEXI,',','.') as nota_atual,
+    ING_ID as id_ingresso,
+    DIS_DISID as id_disciplina
 FROM TB_PESSOA ALU
     INNER JOIN TB_INGRESSO ON (ING_PESID = ALU.PES_ID)
     INNER JOIN TB_MESTRE_ALUNO ON (MAL_INGID = ING_ID)

@@ -20,7 +20,15 @@ def records(sql_file: str, params: tuple = None):
                 return cur.fetchall()
     except Error:
         logger.exception('SQLServer')
-        exit()
+        exit('Erro no banco SQLServer')
+
+
+def insert(sql_file: str, params: tuple = None):
+    with connect(**conn_params) as conn:
+        with conn.cursor() as cur:
+            with open(f'queries/{sql_file}') as f:
+                cur.execute(f.read(), params)
+        conn.commit()
 
 
 if __name__ == '__main__':

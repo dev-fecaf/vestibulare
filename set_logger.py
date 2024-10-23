@@ -1,8 +1,6 @@
 from loguru import logger
 
 
-logger.remove()
-
 logger.add(
     'logs/events.log',
     level='DEBUG',
