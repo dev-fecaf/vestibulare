@@ -75,6 +75,7 @@ def processar_alunos(alunos, id_turma, turma_info, cod_turma):
             medias_finais = medias_finais_resposta.get('resposta', {}).get('mediasFinais', {})
 
             processar_disciplinas(media_disciplinas, turma_info, rga, cod_turma, medias_finais)
+            db.atualiza_tag(ra=rga, tag=f'vestibulare-{ANO_ATUAL}-{PERIODO}')
         except Exception:
             logger.exception(f'Erro ao processar aluno com RGA {rga}')
 

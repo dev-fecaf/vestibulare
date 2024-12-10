@@ -1,7 +1,7 @@
 from os import getenv
 from dotenv import load_dotenv
 
-load_dotenv(dotenv_path='.env.anglo')
+load_dotenv()
 
 CHAVE = getenv('CHAVE')
 VESTIBULARE_URL=getenv('VESTIBULARE_URL')
