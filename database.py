@@ -19,19 +19,38 @@ def records(sql_file: str, params: tuple = None):
                     cur.execute(f.read(), params)
                 return cur.fetchall()
     except Error:
-        logger.exception('SQLServer')
-        exit('Erro no banco SQLServer')
+        logger.exception('SQLServer records')
+        exit('Erro no banco SQLServer records')
 
 
-def insert(sql_file: str, params: tuple = None):
-    with connect(**conn_params) as conn:
-        with conn.cursor() as cur:
-            with open(f'queries/{sql_file}') as f:
-                cur.execute(f.read(), params)
-        conn.commit()
+def insert_or_update(sql_file: str, params: tuple = None):
+    try:
+        with connect(**conn_params) as conn:
+            with conn.cursor() as cur:
+                with open(f'queries/{sql_file}') as f:
+                    cur.execute(f.read(), params)
+            conn.commit()
+    except Error:
+        logger.exception('SQLServer insert_or_update')
+        exit('Erro no banco SQLServer insert_or_update')
 
 
-if __name__ == '__main__':
-    from dict_turmas import turmas
-    r = records('query1.sql', params=(2024, turmas['30']))
-    print(r)
+def atualiza_tag(ra, tag):
+    sql = f"""
+    UPDATE TB_PESSOA
+    SET PES_INTEG_OUTROS = 
+        CASE
+            WHEN PES_INTEG_OUTROS IS NULL THEN ''
+            WHEN PES_INTEG_OUTROS NOT LIKE '%{tag}%' THEN PES_INTEG_OUTROS + '{tag}/'
+            ELSE PES_INTEG_OUTROS
+        END
+    WHERE PES_CODTEL = '{ra}';        
+    """
+    try:
+        with connect(**conn_params) as conn:
+            with conn.cursor() as cur:
+                cur.execute(sql)
+            conn.commit()
+    except Error:
+        logger.exception('SQLServer atualiza_tag')
+        exit('Erro no banco SQLServer atualiza_tag')

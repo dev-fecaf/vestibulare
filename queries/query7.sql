@@ -1,8 +1,8 @@
-DECLARE @total_falta INT = %s
+DECLARE @media_final INT = %s
 DECLARE @ing_id INT = %s
 DECLARE @dis_id INT = %s
-DECLARE @bimestre VARCHAR(2) = %s
 DECLARE @cod_turma VARCHAR(30) = %s
+DECLARE @tipo_nota VARCHAR(2) = 'MF'
 DECLARE @user_alt VARCHAR(30)= 'integracao_vestibulare'
 
 DECLARE @mdi_id INT = (
@@ -23,35 +23,19 @@ DECLARE @mdi_id INT = (
 	    ti.ING_ID = @ing_id
 	    AND tt.TUR_CODTUR = @cod_turma
 	    AND td.DIS_DISID = @dis_id
-	    AND tpt.TNP_CODNOT = @bimestre
+	    AND tpt.TNP_CODNOT = @tipo_nota
 )
 
---Atualiza a quantidade de faltas na disciplina do bimestre
+--Atualiza a média final do aluno com nota que veio da vestibulare
 UPDATE HIS
 SET
-    HIS.HIS_FALTA = @total_falta,
+    HIS.HIS_NOTA = @media_final,
+    HIS.HIS_NOTEXI = REPLACE(CAST(@media_final AS VARCHAR), '.', ','),
     HIS.USUARIO_ULT_ALTERACAO = @user_alt,
     HIS.DATA_ULT_ALTERACAO = GETDATE()
 FROM
-	TB_MESTRE_DISCIPLINA
-	LEFT OUTER JOIN TB_HISTORICO HIS ON (MDI_ID = HIS_MDIID)
+	TB_HISTORICO HIS
 	INNER JOIN TB_PADDIS_TIPNOT tpt ON (HIS_TNPID = TNP_ID)
 WHERE
-    MDI_ID = @mdi_id
-    AND tpt.TNP_CODNOT = @bimestre
-
---Atualiza o total de faltas na disciplina
-UPDATE tmd
-SET
-    MDI_TOTFAL = (
-        SELECT SUM(his_falta)
-        FROM tb_historico
-        JOIN TB_MESTRE_DISCIPLINA ON (MDI_ID = HIS_MDIID)
-        WHERE MDI_ID = @mdi_id
-    ),
-    tmd.USUARIO_ULT_ALTERACAO = @user_alt,
-    tmd.DATA_ULT_ALTERACAO = GETDATE()
-FROM
-    TB_MESTRE_DISCIPLINA tmd
-WHERE
-    tmd.MDI_ID = @mdi_id
+    HIS.HIS_MDIID = @mdi_id
+    AND tpt.TNP_CODNOT = @tipo_nota

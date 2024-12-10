@@ -37,10 +37,10 @@ def turmas(id_unidade: int = 1):
     return response_json
 
 
-def medias_bimestrais(rga: str, id_turma: int, periodo: int, ano: int, id_unidade: int = 1):
+def medias(rota:str, acao: str, rga: str, id_turma: str, periodo: int, ano: int, id_unidade: int = 1):
     params = {
         'chave': chave,
-        'acao': 'medias',
+        'acao': acao,
         'emailAdm': 'administrador@vestibulare.com.br',
         'aluno': json.dumps({
             'rga': rga,
@@ -51,7 +51,7 @@ def medias_bimestrais(rga: str, id_turma: int, periodo: int, ano: int, id_unidad
         })
     }
 
-    response = httpx.get(url=f'{base_url}/mediasBimestrais.php', params=params)
+    response = httpx.get(url=f'{base_url}/{rota}.php', params=params)
     response.raise_for_status()
     response_json = response.json()
 

@@ -3,7 +3,8 @@ SELECT DISTINCT
     APC_ID as apc_id,
     REPLACE(APR_NOTEXI,',','.') as nota_atual,
     ING_ID as id_ingresso,
-    DIS_DISID as id_disciplina
+    DIS_DISID as id_disciplina,
+    HIS_ALTMANUAL as manual
 FROM TB_PESSOA ALU
     INNER JOIN TB_INGRESSO ON (ING_PESID = ALU.PES_ID)
     INNER JOIN TB_MESTRE_ALUNO ON (MAL_INGID = ING_ID)
@@ -24,4 +25,4 @@ WHERE
     AND tt.TUR_CODTUR = %s --codigo da turma
     AND ALU.PES_CODTEL = %s --codigo do aluno RA
     and td.DIS_DESDIS = %s --nome da disciplina
-    AND tpt.TNP_DESCRI = %s --indentificação do bimestre
+    AND tpt.TNP_CODNOT = %s --tipo de nota

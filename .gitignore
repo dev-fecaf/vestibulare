@@ -1,5 +1,5 @@
 *.log
-.env
+.env*
 .venv
 .idea
 __pycache__
