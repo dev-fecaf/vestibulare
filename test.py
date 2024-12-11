@@ -2,7 +2,7 @@ from set_logger import logger
 import database as db
 from dict_turmas import turmas
 from dict_disciplinas import disciplinas
-import api
+import api_vestibulare
 import mentor
 
 

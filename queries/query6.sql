@@ -1,6 +1,6 @@
 SELECT
-    td.DIS_DESDIS as disciplina,
-    td.DIS_OBSERV as id
+    td.DIS_OBSERV as id,
+    td.DIS_DESDIS as disciplina
 FROM
 	TB_TURMA tt
 	INNER JOIN TB_PERIODO_LETIVO tpl ON tt.TUR_PERID = tpl.PEL_PERID

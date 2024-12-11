@@ -2,7 +2,7 @@ from set_logger import logger
 import settings as s
 from datetime import date
 import database as db
-import api
+import api_vestibulare as api
 import mentor
 
 ANO_ATUAL = date.today().year
@@ -75,7 +75,6 @@ def processar_alunos(alunos, id_turma, turma_info, cod_turma):
             medias_finais = medias_finais_resposta.get('resposta', {}).get('mediasFinais', {})
 
             processar_disciplinas(media_disciplinas, turma_info, rga, cod_turma, medias_finais)
-            db.atualiza_tag(ra=rga, tag=f'vestibulare-{ANO_ATUAL}-{PERIODO}')
         except Exception:
             logger.exception(f'Erro ao processar aluno com RGA {rga}')
 
@@ -83,11 +82,11 @@ def processar_alunos(alunos, id_turma, turma_info, cod_turma):
 def processar_disciplinas(media_disciplinas, turma_info, rga, cod_turma, medias_finais):
     media_disciplinas = {ID_DISCIPLINA: media_disciplinas[ID_DISCIPLINA]} if s.TEST else media_disciplinas
 
-    disciplinas = db.records('query6.sql', params=(PERIODO, cod_turma))
+    disciplinas = db.records('query6.sql', params=(ANO_ATUAL, cod_turma))
 
     for id_disciplina, disciplina_info in media_disciplinas.items():
         try:
-            disciplina = next((item for item in disciplinas if int(item['id']) == int(id_disciplina)), {})
+            disciplina = next((item for item in disciplinas if item['id'] == id_disciplina), {})
             disciplina = DISCIPLINA if s.TEST else disciplina.get('disciplina')
 
             if not disciplina:
@@ -103,14 +102,18 @@ def processar_disciplinas(media_disciplinas, turma_info, rga, cod_turma, medias_
                 continue
 
             nota = disciplina_info.get('media')
-            faltas = disciplina_info.get('faltas', 0)
-            registrar_avaliacao(avaliacao, nota, faltas, turma_info, rga, cod_turma)
+            faltas = int(disciplina_info.get('faltas', 0))
+            registrar_avaliacao(
+                avaliacao=avaliacao, nota=nota, turma_info=turma_info, rga=rga, cod_turma=cod_turma, faltas=faltas
+            )
 
             avaliacao_final = buscar_avaliacao(disciplina, rga, cod_turma, TIPO_MEDIA)
             if not avaliacao_final:
                 continue
             media_final = medias_finais.get(id_disciplina, {}).get('media', 0)
-            atualiza_media_final(media_final, avaliacao_final, turma_info, rga)
+            registrar_avaliacao(
+                avaliacao=avaliacao_final, nota=media_final, turma_info=turma_info, rga=rga, cod_turma=cod_turma
+            )
         except Exception:
             logger.exception('Erro ao processar disciplina')
 
@@ -123,26 +126,29 @@ def buscar_avaliacao(disciplina, rga, cod_turma, tipo_nota):
 
     if avaliacao:
         avaliacao = avaliacao[0]
-        if avaliacao['manual'] == 1:
+        if avaliacao.get('manual') == 1:
             logger.error(
                 f'Nota da avaliação com os parametros: {params} tem alteração manual ativada.'
             )
     else:
         logger.error(f'Nenhuma avaliação encontrada para os parâmetros: {params}')
-        avaliacao = None
 
     return avaliacao
 
 
-def registrar_avaliacao(avaliacao, nota, faltas, turma_info, rga, cod_turma):
+def registrar_avaliacao(avaliacao, nota, turma_info, rga, cod_turma, faltas=0):
     if nota:
+        insere_falta(faltas, avaliacao['id_ingresso'], avaliacao['id_disciplina'], BIMESTRE, cod_turma)
+
+        if str(nota) == avaliacao.get('nota_atual'):
+            return
+
         nota_payload = {
             'idAvaliacao': avaliacao['apc_id'],
             'listAlunoNota': [{'idAluno': avaliacao['pes_id'], 'nota': nota}]
         }
         resultado = mentor.executa_servico(servico='gravaNotaAvaliacao', payload=nota_payload).get('valor')
         verificar_retorno_integracao(resultado, nota_payload, turma_info, rga)
-        insere_falta(faltas, avaliacao['id_ingresso'], avaliacao['id_disciplina'], BIMESTRE, cod_turma)
 
 
 def insere_falta(faltas, id_ingresso, id_disciplina, bimestre, cod_turma):
@@ -152,16 +158,6 @@ def insere_falta(faltas, id_ingresso, id_disciplina, bimestre, cod_turma):
             sql_file='query4.sql',
             params=(faltas, id_ingresso, id_disciplina, bimestre, cod_turma)
         )
-
-
-def atualiza_media_final(media, avaliacao, turma_info, rga):
-    if media > 0:
-        nota_payload = {
-            'idAvaliacao': avaliacao['apc_id'],
-            'listAlunoNota': [{'idAluno': avaliacao['pes_id'], 'nota': media}]
-        }
-        resultado = mentor.executa_servico(servico='gravaNotaAvaliacao', payload=nota_payload).get('valor')
-        verificar_retorno_integracao(resultado, nota_payload, turma_info, rga)
 
 
 def verificar_retorno_integracao(resultado, nota_payload, turma_info, rga):
