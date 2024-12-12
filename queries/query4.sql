@@ -6,7 +6,8 @@ DECLARE @cod_turma VARCHAR(30) = %s
 DECLARE @user_alt VARCHAR(30)= 'integracao_vestibulare'
 
 DECLARE @mdi_id INT = (
-	SELECT MDI_ID
+	SELECT TOP 1
+	    MDI_ID
 	FROM
 		TB_PESSOA PES
 		INNER JOIN TB_INGRESSO ti ON (PES_ID = ING_PESID)

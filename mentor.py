@@ -15,7 +15,7 @@ def gera_token(servico):
         'senha': senha
     }
 
-    response = httpx.get(url=url, headers=headers, timeout=10)
+    response = httpx.get(url=url, headers=headers, timeout=15)
 
     if response.status_code != 200:
         raise httpx.HTTPStatusError(message=response.text, request=response.request, response=response)
@@ -30,7 +30,7 @@ def executa_servico(servico: str, payload: dict):
         'token': gera_token(servico)
     }
 
-    response = httpx.post(url=url, headers=headers, json=payload, timeout=15)
+    response = httpx.post(url=url, headers=headers, json=payload, timeout=30)
 
     if response.status_code != 200:
         raise httpx.HTTPStatusError(message=response.text, request=response.request, response=response)
