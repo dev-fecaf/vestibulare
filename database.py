@@ -20,7 +20,6 @@ def records(sql_file: str, params: tuple = None):
                 return cur.fetchall()
     except Error:
         logger.exception('SQLServer records')
-        exit('Erro no banco SQLServer records')
 
 
 def insert_or_update(sql_file: str, params: tuple = None):
@@ -32,7 +31,6 @@ def insert_or_update(sql_file: str, params: tuple = None):
             conn.commit()
     except Error:
         logger.exception('SQLServer insert_or_update')
-        exit('Erro no banco SQLServer insert_or_update')
 
 
 def atualiza_tag(ra, tag):
@@ -53,4 +51,3 @@ def atualiza_tag(ra, tag):
             conn.commit()
     except Error:
         logger.exception('SQLServer atualiza_tag')
-        exit('Erro no banco SQLServer atualiza_tag')
