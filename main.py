@@ -4,6 +4,7 @@ from datetime import date
 import database as db
 import api_vestibulare as api
 import mentor
+import httpx
 
 ANO_ATUAL = date.today().year
 PERIODO = 1
@@ -75,6 +76,8 @@ def processar_alunos(alunos, id_turma, turma_info, cod_turma):
             medias_finais = medias_finais_resposta.get('resposta', {}).get('mediasFinais', {})
 
             processar_disciplinas(media_disciplinas, turma_info, rga, cod_turma, medias_finais)
+        except httpx.HTTPStatusError:
+            logger.error(f'Aluno com RGA {rga} não encontrado na turma {turma_info} da vestibulare')
         except Exception:
             logger.exception(f'Erro ao processar aluno com RGA {rga}')
 
