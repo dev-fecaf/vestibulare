@@ -77,7 +77,8 @@ def processar_alunos(alunos, id_turma, turma_info, cod_turma):
 
             processar_disciplinas(media_disciplinas, turma_info, rga, cod_turma, medias_finais)
         except httpx.HTTPStatusError:
-            logger.error(f'Aluno com RGA {rga} não encontrado na turma {turma_info} da vestibulare')
+            logger.error(f'Aluno com RGA {rga} não encontrado na turma ID {turma_info['id']} '
+                         f'nome {turma_info['nomeCompleto']} da vestibulare')
         except Exception:
             logger.exception(f'Erro ao processar aluno com RGA {rga}')
 
