@@ -5,6 +5,7 @@ load_dotenv()
 
 CHAVE = getenv('CHAVE')
 VESTIBULARE_URL=getenv('VESTIBULARE_URL')
+UNIDADE = getenv('UNIDADE')
 
 # Banco SQL Server
 MS_HOST = getenv('MS_HOST')

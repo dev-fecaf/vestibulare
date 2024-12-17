@@ -3,8 +3,9 @@ import httpx
 import settings as s
 
 
-base_url = 'https://ser-importacao.vestibulare.com.br/va/api'
+base_url = s.VESTIBULARE_URL
 chave = s.CHAVE
+id_unidade = s.UNIDADE
 
 
 def unidade():
@@ -19,7 +20,7 @@ def unidade():
     return response.json()
 
 
-def turmas(id_unidade: int = 1):
+def turmas():
     params = {
         'chave': chave,
         'acao': 'selecionar',
@@ -37,7 +38,7 @@ def turmas(id_unidade: int = 1):
     return response_json
 
 
-def medias(rota:str, acao: str, rga: str, id_turma: str, periodo: int, ano: int, id_unidade: int = 1):
+def medias(rota:str, acao: str, rga: str, id_turma: str, periodo: int, ano: int):
     params = {
         'chave': chave,
         'acao': acao,
