@@ -4,7 +4,7 @@ from dotenv import load_dotenv
 load_dotenv()
 
 CHAVE = getenv('CHAVE')
-VESTIBULARE_URL=getenv('VESTIBULARE_URL')
+VESTIBULARE_API=getenv('VESTIBULARE_API')
 UNIDADE = getenv('UNIDADE')
 
 # Banco SQL Server

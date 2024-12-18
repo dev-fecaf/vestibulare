@@ -3,7 +3,7 @@ import httpx
 import settings as s
 
 
-base_url = s.VESTIBULARE_URL
+base_url = s.VESTIBULARE_API
 chave = s.CHAVE
 id_unidade = s.UNIDADE
 
