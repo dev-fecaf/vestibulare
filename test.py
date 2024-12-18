@@ -3,7 +3,7 @@ import database as db
 from dict_turmas import turmas
 from dict_disciplinas import disciplinas
 import api_vestibulare
-import mentor
+import mentor_service
 
 
 ano_atual = 2024

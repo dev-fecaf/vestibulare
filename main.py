@@ -3,7 +3,7 @@ import settings as s
 from datetime import date
 import database as db
 import api_vestibulare as api
-import mentor
+import mentor_service as mentor
 import httpx
 
 ANO_ATUAL = date.today().year
@@ -90,6 +90,8 @@ def processar_disciplinas(media_disciplinas, turma_info, rga, cod_turma, medias_
 
     for id_disciplina, disciplina_info in media_disciplinas.items():
         try:
+            id_disciplina = f'0{id_disciplina}' if int(id_disciplina) < 10 else id_disciplina
+
             disciplina = next((item for item in disciplinas if item['id'] == id_disciplina), {})
             disciplina = DISCIPLINA if s.TEST else disciplina.get('disciplina')
 
