@@ -6,13 +6,11 @@ import api_vestibulare as api
 import mentor_service as mentor
 import httpx
 
-ANO_ATUAL = date.today().year
-PERIODO = 1
-BIMESTRE = f'M{PERIODO}'
+
 COD_ERRO_ICA = 'ICA_00800'
 TIPO_MEDIA = 'MFB'
 
-# Variaveis de TEST
+# Variaveis de TESTE
 ID_TURMA = '30'
 ID_DISCIPLINA = '112'
 DISCIPLINA = 'Língua Portuguesa'
@@ -21,17 +19,15 @@ RGA = {'ra': '258'}
 MENTOR_TURMA = s.MENTOR_TURMA
 MENTOR_RA = s.MENTOR_RA
 FALTAS = 1
-PERIODO = 2 if s.TEST else PERIODO
-BIMESTRE = 'M4' if s.TEST else BIMESTRE
 
 
-def processar_turmas():
+def processar_turmas(periodo):
     turmas = api.turmas().get('turmas', {})
     turmas = {ID_TURMA: turmas[ID_TURMA]} if s.TEST else turmas
 
     for id_turma, turma_info in turmas.items():
         try:
-            if 'Infantil' in turma_info.get('nomeCompleto'):
+            if ('infantil' or 'contraturno') in turma_info.get('nomeCompleto', '').lower():
                 continue
 
             turma = db.records('query5.sql', params=(ANO_ATUAL, id_turma))
@@ -46,9 +42,10 @@ def processar_turmas():
             alunos = buscar_alunos(turma)
             alunos = [RGA] if s.TEST else alunos
             if not alunos:
+                logger.error(f'Nenhum aluno ativo retornado do mentor para a turma {turma}')
                 continue
 
-            processar_alunos(alunos, id_turma, turma_info, turma)
+            processar_alunos(alunos, id_turma, turma_info, turma, periodo)
             print('Finalizado')
         except Exception:
             logger.exception('Erro ao processar turma')
@@ -61,17 +58,28 @@ def buscar_alunos(turma):
     return alunos
 
 
-def processar_alunos(alunos, id_turma, turma_info, cod_turma):
+def processar_alunos(alunos, id_turma, turma_info, cod_turma, periodo):
     for aluno in alunos:
         rga = aluno['ra']
         try:
             medias = api.medias(
-                rota='mediasBimestrais', acao='medias', rga=rga, id_turma=id_turma, periodo=PERIODO, ano=ANO_ATUAL
+                rota='mediasBimestrais',
+                acao='medias',
+                rga=rga,
+                id_turma=id_turma,
+                periodo=periodo,
+                ano=ANO_ATUAL
             )
+
             media_disciplinas = medias.get('resposta', {}).get('mediaPorDisciplina', {})
 
             medias_finais_resposta = api.medias(
-                rota='mediasFinais', acao='mediasFinais', rga=rga, id_turma=id_turma, periodo=PERIODO, ano=ANO_ATUAL
+                rota='mediasFinais',
+                acao='mediasFinais',
+                rga=rga,
+                id_turma=id_turma,
+                periodo=periodo,
+                ano=ANO_ATUAL
             )
             medias_finais = medias_finais_resposta.get('resposta', {}).get('mediasFinais', {})
 
@@ -110,7 +118,12 @@ def processar_disciplinas(media_disciplinas, turma_info, rga, cod_turma, medias_
             nota = disciplina_info.get('media')
             faltas = int(disciplina_info.get('faltas', 0))
             registrar_avaliacao(
-                avaliacao=avaliacao, nota=nota, turma_info=turma_info, rga=rga, cod_turma=cod_turma, faltas=faltas
+                avaliacao=avaliacao,
+                nota=nota,
+                turma_info=turma_info,
+                rga=rga,
+                cod_turma=cod_turma,
+                faltas=faltas
             )
 
             avaliacao_final = buscar_avaliacao(disciplina, rga, cod_turma, TIPO_MEDIA)
@@ -118,7 +131,11 @@ def processar_disciplinas(media_disciplinas, turma_info, rga, cod_turma, medias_
                 continue
             media_final = medias_finais.get(id_disciplina, {}).get('media', 0)
             registrar_avaliacao(
-                avaliacao=avaliacao_final, nota=media_final, turma_info=turma_info, rga=rga, cod_turma=cod_turma
+                avaliacao=avaliacao_final,
+                nota=media_final,
+                turma_info=turma_info,
+                rga=rga,
+                cod_turma=cod_turma
             )
         except Exception:
             logger.exception('Erro ao processar disciplina')
@@ -144,7 +161,7 @@ def buscar_avaliacao(disciplina, rga, cod_turma, tipo_nota):
 
 def registrar_avaliacao(avaliacao, nota, turma_info, rga, cod_turma, faltas=0):
     if nota:
-        insere_falta(faltas, avaliacao['id_ingresso'], avaliacao['id_disciplina'], BIMESTRE, cod_turma)
+        insere_falta(faltas, avaliacao, BIMESTRE, cod_turma)
 
         if str(nota) == avaliacao.get('nota_atual'):
             return
@@ -153,16 +170,27 @@ def registrar_avaliacao(avaliacao, nota, turma_info, rga, cod_turma, faltas=0):
             'idAvaliacao': avaliacao['apc_id'],
             'listAlunoNota': [{'idAluno': avaliacao['pes_id'], 'nota': nota}]
         }
-        resultado = mentor.executa_servico(servico='gravaNotaAvaliacao', payload=nota_payload).get('valor')
+        resultado = mentor.executa_servico(
+            servico='gravaNotaAvaliacao', payload=nota_payload).get('valor')
+
         verificar_retorno_integracao(resultado, nota_payload, turma_info, rga)
 
 
-def insere_falta(faltas, id_ingresso, id_disciplina, bimestre, cod_turma):
+def insere_falta(faltas, avaliacao, bimestre, cod_turma):
+    if str(faltas) == str(avaliacao.get('faltas')):
+        return
+
     faltas = FALTAS if s.TEST else faltas
     if faltas > 0:
         db.insert_or_update(
             sql_file='query4.sql',
-            params=(faltas, id_ingresso, id_disciplina, bimestre, cod_turma)
+            params=(
+                faltas,
+                avaliacao['id_ingresso'],
+                avaliacao['id_disciplina'],
+                bimestre,
+                cod_turma
+            )
         )
 
 
@@ -178,8 +206,36 @@ def verificar_retorno_integracao(resultado, nota_payload, turma_info, rga):
                 )
 
 
+def processar_infantil(alunos, id_turma, turma_info, periodo):
+    for aluno in alunos:
+        rga = aluno['ra']
+        try:
+            medias = api.medias(
+                rota='mediasBimestrais',
+                acao='medias',
+                rga=rga,
+                id_turma=id_turma,
+                periodo=periodo,
+                ano=ANO_ATUAL
+            )
+            total_faltas = medias.get('resposta', {}).get('totalFaltas', {})
+
+
+
+        except httpx.HTTPStatusError:
+            logger.error(f'Aluno com RGA {rga} não encontrado na turma ID {turma_info['id']} '
+                         f'nome {turma_info['nomeCompleto']} da vestibulare')
+        except Exception:
+            logger.exception(f'Erro ao processar aluno com RGA {rga}')
+
+
 if __name__ == '__main__':
     try:
-        processar_turmas()
+        ANO_ATUAL = date.today().year
+        ANO_ATUAL = 2024
+        for periodo in s.PERIODOS:
+            periodo = int(periodo)
+            BIMESTRE = f'M{periodo}'
+            processar_turmas(periodo)
     except:
         logger.exception("Erro no processamento geral")

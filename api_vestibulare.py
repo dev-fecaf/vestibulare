@@ -60,3 +60,7 @@ def medias(rota:str, acao: str, rga: str, id_turma: str, periodo: int, ano: int)
         raise httpx.HTTPStatusError(message=response.text, request=response.request, response=response)
 
     return response_json
+
+
+if __name__ == '__main__':
+    print(turmas())

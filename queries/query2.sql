@@ -2,6 +2,7 @@ SELECT DISTINCT
     ALU.PES_ID as pes_id,
     APC_ID as apc_id,
     REPLACE(APR_NOTEXI,',','.') as nota_atual,
+    HIS_FALTA as faltas,
     ING_ID as id_ingresso,
     DIS_DISID as id_disciplina,
     HIS_ALTMANUAL as manual
