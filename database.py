@@ -51,3 +51,10 @@ def atualiza_tag(ra, tag):
             conn.commit()
     except Error:
         logger.exception('SQLServer atualiza_tag')
+
+
+if __name__ == '__main__':
+    with connect(**conn_params) as conn:
+        with conn.cursor(as_dict=True) as cur:
+            cur.execute('SELECT TOP 1 * FROM TB_PESSOA')
+            print(cur.fetchall())

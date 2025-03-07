@@ -85,8 +85,7 @@ def processar_alunos(alunos, id_turma, turma_info, cod_turma, periodo):
 
             processar_disciplinas(media_disciplinas, turma_info, rga, cod_turma, medias_finais)
         except httpx.HTTPStatusError:
-            logger.error(f'Aluno com RGA {rga} não encontrado na turma ID {turma_info['id']} '
-                         f'nome {turma_info['nomeCompleto']} da vestibulare')
+            logger.exception(f'Erro ao processar aluno com RGA {rga}, possivel erro de turma diferente')
         except Exception:
             logger.exception(f'Erro ao processar aluno com RGA {rga}')
 
@@ -98,9 +97,7 @@ def processar_disciplinas(media_disciplinas, turma_info, rga, cod_turma, medias_
 
     for id_disciplina, disciplina_info in media_disciplinas.items():
         try:
-            id_disciplina = f'0{id_disciplina}' if int(id_disciplina) < 10 else id_disciplina
-
-            disciplina = next((item for item in disciplinas if item['id'] == id_disciplina), {})
+            disciplina = next((item for item in disciplinas if int(item['id']) == int(id_disciplina)), {})
             disciplina = DISCIPLINA if s.TEST else disciplina.get('disciplina')
 
             if not disciplina:
