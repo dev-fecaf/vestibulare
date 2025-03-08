@@ -1,0 +1,10 @@
+services:
+  app:
+    container_name: vestibulare
+    build: .
+    image: vestibulare
+    env_file:
+      - .env
+    volumes:
+      - ./app:/app
+    command: sleep 86400

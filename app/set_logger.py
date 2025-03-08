@@ -2,9 +2,9 @@ from loguru import logger
 
 
 logger.add(
-    'events.log',
+    'logs/events.log',
     level='DEBUG',
     rotation='100 MB',
-    retention='365 days',
+    retention='300 days',
     compression='zip'
 )
